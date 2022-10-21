@@ -1,0 +1,59 @@
+# Copyright 2022 Tulpan Andrei 324CA - Tema 1 PCom (Router)
+
+# Task-uri rezolvate: Protocolul ARP, Procesul de dirijare,
+# Longest Prefix Match, Protocolul ICMP, actualizarea sumei
+# de control incrementale (bonus)
+
+# Am vorbitul cu laborantul si am folosit 2 sleep days
+
+<-------------------------Introducere------------------------->
+    In implementarea data plane-ului pentru router, am
+impartit functionalitatile acestuia in mai multe functii
+pentru o mai buna vizibilitate asupra codului. La pornirea
+routerului initializez un pachet, tabela de rutare, cache-ul
+ARP si 2 cozi de pachete.
+
+<--------------------------Data Plane------------------------->
+    In fiecare pas al buclei de functionare din implementarea
+data plane-ului extrag header-ul ethernet al pachetului
+primit si aflu din ether_type-ul acestuia ce tip de pachet
+este (ARP/IPv4). In functie de tipul pachetului execut anumite
+functii specifice, dar inainte de executia acestora verific
+daca pachetul are adresa mac de destinatie a interfetei pe
+care a intrat sau daca are aceasta adresa setata ca adresa de
+broadcast.
+
+<--------------------------Pachete ARP------------------------>
+    Daca primesc un ARP request, ii trimit inapoi sursei un
+pachet de tip ARP reply cu adresa mac de pe interfata
+routerului pe care a intrat pachetul.
+
+    Daca primesc un ARP reply, salvez adresa mac a sursei
+in cache-ul ARP si apoi trimit toate pachetele din coada
+de pachete curenta, care depindeau de acest ARP reply.
+
+<-------------------------Pachete IPv4------------------------>
+    In cazul in care pachetul este de tip IPv4, verific daca
+TTL-ul pachetului mai este valabil si daca a fost gasita o ruta
+catre urmatoarea destinatie in tabela de rutare, in caz contrar
+pentru aceste doua situatii trimit pachete de tip ICMP pentru a
+anunta aruncarea pachetului. Tot aici se va verifica si
+checksum-ul daca este corect, in caz contrar se vor arunca si
+aceste pachete. Dupa toate aceste verificari, caut daca exista
+o intrare in memoria cache ARP pentru next hop si trimit
+pachetul, in caz contrar trimit un ARP request pentru a afla
+mac-ul acestuia si adaug pachetul in coada curenta.
+
+<-------------------------Alte Detalii------------------------>
+    Inainte de trimiterea fiecarui pachet am updatat header-ul
+ethernet si respectiv fiecare header specific pachetelor in
+parte (ARP/IPv4/ICMP) pentru a ajunge la destinatia corecta.
+
+    Pentru implementarea updatarii sumei de control in urma
+scaderii TTL-ului, m-am folosit de urmatoarea formula:
+new_checksum = old_checksum + old_ttl + ~new_ttl
+
+    Pentru o implementare eficienta a LPM-ului am incercat
+sa folosesc o cautare binara, dar cred ca este aproape
+imposibil si ar fi trebuit incercat inca de la inceput
+folosirea unui trie.
